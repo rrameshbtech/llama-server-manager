@@ -1,0 +1,67 @@
+#!/bin/zsh
+# Usage: ai-model-start <MODEL_ALIAS> [-c CTX_SIZE] [-p PORT]
+
+source "$HOME/projects/ai-models/.config/registry.sh"
+
+MODEL_ALIAS=$1
+shift
+
+if [ -z "$MODEL_ALIAS" ]; then
+  echo "Error: Missing model alias."
+  echo "Usage: ai-model-start <MODEL_ALIAS> [-c CTX_SIZE] [-p PORT]"
+  exit 1
+fi
+
+CTX=$DEFAULT_CTX
+PORT=$DEFAULT_PORT
+
+# Parse optional overrides
+while getopts "c:p:" opt; do
+  case $opt in
+    c) CTX=$OPTARG ;;
+    p) PORT=$OPTARG ;;
+    *) echo "Usage: ai-model-start <MODEL_ALIAS> [-c CTX_SIZE] [-p PORT]" && exit 1 ;;
+  esac
+done
+
+# Resolve Model Filename
+FILE=$(get_model_filename "$MODEL_ALIAS")
+
+if [ -z "$FILE" ]; then
+  echo "[ERROR] Unknown model alias: '$MODEL_ALIAS'"
+  echo "Check registered models in ~/projects/ai-models/.config/registry.sh"
+  exit 1
+fi
+
+FULL_PATH="$MODELS_DIR/$FILE"
+
+if [ ! -f "$FULL_PATH" ]; then
+  echo "[ERROR] Model file not found at: $FULL_PATH"
+  exit 1
+fi
+
+# Check if port is already in use
+if lsof -i:$PORT >/dev/null 2>&1; then
+  echo "[ERROR] Port $PORT is already in use. Run 'ai-model-stop -p $PORT' or choose another port."
+  exit 1
+fi
+
+echo "[ACTION] Launching $MODEL_ALIAS ($FILE)..."
+echo "  • Context Length : $CTX tokens"
+echo "  • Port           : $PORT"
+echo "  • Log Output     : $LOG_FILE"
+
+nohup llama-server \
+  -m "$FULL_PATH" \
+  -c "$CTX" \
+  -ngl 99 \
+  --port "$PORT" \
+  --alias "$MODEL_ALIAS" > "$LOG_FILE" 2>&1 &
+
+sleep 1
+
+if lsof -i:$PORT >/dev/null 2>&1; then
+  echo "[SUCCESS] $MODEL_ALIAS is live at http://localhost:$PORT"
+else
+  echo "[ERROR] Server failed to start. Check logs using: ai-model-logs"
+fi

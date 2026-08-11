@@ -1,0 +1,65 @@
+#!/bin/zsh
+# Usage: ai-model-stop [-p PORT]
+
+source "$HOME/.config/ai-models/registry.sh"
+
+PORT=$DEFAULT_PORT
+
+# Parse flags
+while getopts "p:" opt; do
+  case $opt in
+    p) PORT=$OPTARG ;;
+    *) echo "Usage: ai-model-stop [-p PORT]" && exit 1 ;;
+  esac
+done
+
+# 1. Target EXCLUSIVELY sockets in LISTEN state (splits lines into Zsh array)
+typeset -a PIDS
+PIDS=(${(f)"$(lsof -t -iTCP:${PORT} -sTCP:LISTEN 2>/dev/null)"})
+
+# 2. Fallback: Match by process executable name if port query returns empty
+if [ ${#PIDS[@]} -eq 0 ]; then
+  PIDS=(${(f)"$(pgrep -f llama-server 2>/dev/null)"})
+fi
+
+# Exit early if no matching processes exist
+if [ ${#PIDS[@]} -eq 0 ] || [ -z "${PIDS[1]}" ]; then
+  echo "[INFO] No active llama-server process found on port $PORT."
+  exit 0
+fi
+
+echo "[ACTION] Stopping llama-server (PIDs: ${PIDS[*]}) on port $PORT..."
+
+# 3. Issue graceful termination (SIGTERM) to all matching PIDs
+kill -15 "${PIDS[@]}" 2>/dev/null
+
+# 4. Wait up to 5 seconds for processes to unload VRAM and exit
+for i in {1..5}; do
+  STILL_ALIVE=0
+  for pid in "${PIDS[@]}"; do
+    if kill -0 "$pid" 2>/dev/null; then
+      STILL_ALIVE=1
+      break
+    fi
+  done
+  
+  if [ $STILL_ALIVE -eq 0 ]; then
+    echo "[SUCCESS] Process(es) terminated gracefully."
+    exit 0
+  fi
+  sleep 1
+done
+
+# 5. Force kill (SIGKILL) if processes remain unresponsive
+echo "[WARN] Process(es) did not exit within 5s. Force killing (SIGKILL)..."
+kill -9 "${PIDS[@]}" 2>/dev/null
+sleep 1
+
+# Final sanity check on port
+if lsof -iTCP:${PORT} -sTCP:LISTEN >/dev/null 2>&1; then
+  echo "[ERROR] Failed to free port $PORT. Manual intervention required:"
+  echo "        Run: sudo kill -9 \$(lsof -t -i:${PORT})"
+  exit 1
+else
+  echo "[SUCCESS] Port $PORT freed. All processes stopped."
+fi

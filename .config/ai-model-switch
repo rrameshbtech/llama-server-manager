@@ -1,0 +1,25 @@
+#!/bin/zsh
+# Usage: ai-model-switch <MODEL_ALIAS> [-c CTX_SIZE] [-p PORT]
+
+source "$HOME/projects/ai-models/.config/registry.sh"
+
+MODEL_ALIAS=$1
+PORT=$DEFAULT_PORT
+
+# Extract port from arguments if passed to forward to stop script
+ARGS=("$@")
+for ((i=1; i<=$#ARGS; i++)); do
+  if [[ "${ARGS[$i]}" == "-p" ]]; then
+    PORT="${ARGS[$((i+1))]}"
+  fi
+done
+
+echo "=================================================="
+echo "[SWITCH] Changing active model on port $PORT"
+echo "=================================================="
+
+# Step 1: Stop current model on target port
+ai-model-stop -p "$PORT"
+
+# Step 2: Start new model with passed arguments
+ai-model-start "$@"

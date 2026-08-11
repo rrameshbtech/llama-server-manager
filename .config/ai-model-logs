@@ -1,0 +1,21 @@
+#!/bin/zsh
+# Usage: ai-model-logs [-n LINES]
+
+source "$HOME/projects/ai-models/.config/registry.sh"
+
+LINES=50
+
+while getopts "n:" opt; do
+  case $opt in
+    n) LINES=$OPTARG ;;
+    *) echo "Usage: ai-model-logs [-n LINES]" && exit 1 ;;
+  esac
+done
+
+if [ ! -f "$LOG_FILE" ]; then
+  echo "[ERROR] Log file not found at $LOG_FILE"
+  exit 1
+fi
+
+echo "[INFO] Streaming live logs from $LOG_FILE (Press Ctrl+C to exit)..."
+tail -n "$LINES" -f "$LOG_FILE"
