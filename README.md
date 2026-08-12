@@ -13,17 +13,19 @@ Before using this toolkit, ensure the following are installed and configured on 
 
 ## 🛠️ Setup
 
-1. **Place the Scripts**  
-   Copy the `.config/` directory contents to a directory included in your `$PATH`, or create symlinks:
+1. **Create Symlinks**  
+   Link the scripts to `~/.local/bin/` so they're available as terminal commands from anywhere:
    ```bash
    mkdir -p ~/.local/bin
-   cp .config/ai-model-* ~/.local/bin/
-   cp .config/registry.sh ~/.local/bin/
-   chmod +x ~/.local/bin/ai-model-* ~/.local/bin/registry.sh
+   ln -sf /Users/rrama/projects/ai-models/.config/ai-model-start ~/.local/bin/ai-model-start
+   ln -sf /Users/rrama/projects/ai-models/.config/ai-model-stop ~/.local/bin/ai-model-stop
+   ln -sf /Users/rrama/projects/ai-models/.config/ai-model-switch ~/.local/bin/ai-model-switch
+   ln -sf /Users/rrama/projects/ai-models/.config/ai-model-status ~/.local/bin/ai-model-status
+   ln -sf /Users/rrama/projects/ai-models/.config/ai-model-logs ~/.local/bin/ai-model-logs
    ```
 
 2. **Configure `registry.sh`**  
-   Edit `~/.local/bin/registry.sh` (or wherever you placed it) to match your environment:
+   Edit the registry file at `.config/registry.sh` (relative to project root) to match your environment:
    ```zsh
    MODELS_DIR="$HOME/projects/ai-models"  # Path to your GGUF models
    DEFAULT_PORT=8080                     # Default HTTP port
@@ -46,6 +48,7 @@ All commands assume the scripts are in your `$PATH`. Run them from any directory
 | `ai-model-start` | Start a model server |
 | `ai-model-stop` | Stop a model server |
 | `ai-model-switch` | Switch between models |
+| `ai-model-status` | Check running model status |
 | `ai-model-logs` | View live server logs |
 
 ---
@@ -104,6 +107,32 @@ ai-model-switch qwen35
 
 # Switch with custom context and port
 ai-model-switch phi-mini -c 16384 -p 8081
+```
+
+---
+
+### Check Model Status
+
+Displays all running `llama-server` processes with their alias, port, PID, and status.
+
+```bash
+# List all active models
+ai-model-status
+
+# Check specific port
+ai-model-status -p 8080
+```
+
+**Output Example:**
+```
+  ACTIVE AI MODELS
+
+  ALIAS            PORT     PID      STATUS
+  ───────────────  ───────  ───────  ────────
+  qwen35           8080     12345    ● Running
+  phi-mini         8081     12567    ● Running
+
+Total: 2 active model(s)
 ```
 
 ---
