@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Usage: ai-model-start <MODEL_ALIAS> [-c CTX_SIZE] [-p PORT]
+# Usage: ai-model-start <MODEL_ALIAS> [-c CTX_SIZE] [-p PORT] [-j] [EXTRA_ARGS...]
 
 source "$HOME/projects/ai-models/.config/registry.sh"
 
@@ -8,21 +8,27 @@ shift
 
 if [ -z "$MODEL_ALIAS" ]; then
   echo "Error: Missing model alias."
-  echo "Usage: ai-model-start <MODEL_ALIAS> [-c CTX_SIZE] [-p PORT]"
+  echo "Usage: ai-model-start <MODEL_ALIAS> [-c CTX_SIZE] [-p PORT] [-j] [EXTRA_ARGS...]"
   exit 1
 fi
 
 CTX=$DEFAULT_CTX
 PORT=$DEFAULT_PORT
+JINJA=false
 
 # Parse optional overrides
-while getopts "c:p:" opt; do
+while getopts "c:p:j" opt; do
   case $opt in
     c) CTX=$OPTARG ;;
     p) PORT=$OPTARG ;;
-    *) echo "Usage: ai-model-start <MODEL_ALIAS> [-c CTX_SIZE] [-p PORT]" && exit 1 ;;
+    j) JINJA=true ;;
+    *) echo "Usage: ai-model-start <MODEL_ALIAS> [-c CTX_SIZE] [-p PORT] [-j] [EXTRA_ARGS...]" && exit 1 ;;
   esac
 done
+
+# Collect remaining arguments for llama-server
+shift $((OPTIND - 1))
+EXTRA_ARGS=("$@")
 
 # Resolve Model Filename
 FILE=$(get_model_filename "$MODEL_ALIAS")
@@ -51,12 +57,20 @@ echo "  • Context Length : $CTX tokens"
 echo "  • Port           : $PORT"
 echo "  • Log Output     : $LOG_FILE"
 
+# Build jinja flag
+JINJA_FLAG=""
+if [ "$JINJA" = true ]; then
+  JINJA_FLAG="--jinja"
+fi
+
 nohup llama-server \
   -m "$FULL_PATH" \
   -c "$CTX" \
+  $JINJA_FLAG \
   -ngl 99 \
   --port "$PORT" \
-  --alias "$MODEL_ALIAS" > "$LOG_FILE" 2>&1 &
+  --alias "$MODEL_ALIAS" \
+  "${EXTRA_ARGS[@]}" > "$LOG_FILE" 2>&1 &
 
 sleep 1
 

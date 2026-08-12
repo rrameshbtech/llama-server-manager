@@ -8,30 +8,30 @@ Before using this toolkit, ensure the following are installed and configured on 
 
 - **Shell**: `zsh` (the scripts are written for Zsh)
 - **Backend**: `llama-server` binary from [llama.cpp](https://github.com/ggerganov/llama.cpp) must be installed and available in your `$PATH`
-- **Models**: GGUF model files stored in a dedicated directory (default: `~/projects/ai-models`)
+- **Models**: GGUF model files stored in a dedicated directory (default: the project directory)
 - **System Tools**: Standard Unix utilities (`lsof`, `pgrep`, `tail`, `nohup`, `kill`)
 
 ## 🛠️ Setup
 
 1. **Create Symlinks**  
    Link the scripts to `~/.local/bin/` so they're available as terminal commands from anywhere:
-   ```bash
-   mkdir -p ~/.local/bin
-   ln -sf /Users/rrama/projects/ai-models/.config/ai-model-start ~/.local/bin/ai-model-start
-   ln -sf /Users/rrama/projects/ai-models/.config/ai-model-stop ~/.local/bin/ai-model-stop
-   ln -sf /Users/rrama/projects/ai-models/.config/ai-model-switch ~/.local/bin/ai-model-switch
-   ln -sf /Users/rrama/projects/ai-models/.config/ai-model-status ~/.local/bin/ai-model-status
-   ln -sf /Users/rrama/projects/ai-models/.config/ai-model-logs ~/.local/bin/ai-model-logs
-   ```
+    ```bash
+    mkdir -p ~/.local/bin
+    ln -sf <PROJECT_ROOT>/.config/ai-model-start ~/.local/bin/ai-model-start
+    ln -sf <PROJECT_ROOT>/.config/ai-model-stop ~/.local/bin/ai-model-stop
+    ln -sf <PROJECT_ROOT>/.config/ai-model-switch ~/.local/bin/ai-model-switch
+    ln -sf <PROJECT_ROOT>/.config/ai-model-status ~/.local/bin/ai-model-status
+    ln -sf <PROJECT_ROOT>/.config/ai-model-logs ~/.local/bin/ai-model-logs
+    ```
 
 2. **Configure `registry.sh`**  
-   Edit the registry file at `.config/registry.sh` (relative to project root) to match your environment:
-   ```zsh
-   MODELS_DIR="$HOME/projects/ai-models"  # Path to your GGUF models
-   DEFAULT_PORT=8080                     # Default HTTP port
-   DEFAULT_CTX=32768                     # Default context length
-   LOG_FILE="$HOME/llama-server.log"     # Log output path
-   ```
+    Edit the registry file at `.config/registry.sh` (relative to project root) to match your environment:
+    ```zsh
+    MODELS_DIR="$HOME/projects/ai-models"  # Path to your GGUF models
+    DEFAULT_PORT=8080                     # Default HTTP port
+    DEFAULT_CTX=32768                     # Default context length
+    LOG_FILE="$HOME/llama-server.log"     # Log output path
+    ```
    Update the `get_model_filename()` function to map your model aliases to actual `.gguf` filenames.
 
 3. **Ensure Consistent Sourcing**  
