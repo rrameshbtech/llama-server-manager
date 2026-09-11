@@ -32,7 +32,11 @@ Before using this toolkit, ensure the following are installed and configured on 
     DEFAULT_CTX=32768                     # Default context length
     LOG_FILE="$HOME/llama-server.log"     # Log output path
     ```
-   Update the `get_model_filename()` function to map your model aliases to actual `.gguf` filenames.
+   **Adding a new model:** To register a new model, do two things in `get_model_filename()`:
+    1. Add the alias to the `KNOWN_MODELS` array (line ~27) — this is the **single source of truth** for valid aliases.
+    2. Add a matching `case` branch that `echo`es the `.gguf` filename.
+
+    The `list_models()` function iterates over `KNOWN_MODELS` and calls `get_model_filename()` at runtime, so the error message and any dynamic model listings are always in sync — no manual duplication needed.
 
 3. **Ensure Consistent Sourcing**  
    The scripts expect `registry.sh` to be in a predictable location. Update the `source` paths in the scripts if you place `registry.sh` elsewhere.
@@ -76,6 +80,9 @@ ai-model-start phi-mini -p 9000
 - `-p PORT` — Override default port (default: `8080`)
 
 **Registered Models:**
+
+> The list below is generated at runtime from the `KNOWN_MODELS` array in `.config/registry.sh`. If you pass an unknown alias to `ai-model-start`, it will display this same list automatically.
+
 | Alias | Model File |
 |---|---|
 | `qwen35` | `Qwen3.6-35B-A3B-UD-Q4_K_M.gguf` |

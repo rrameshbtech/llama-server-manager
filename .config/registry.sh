@@ -22,3 +22,19 @@ get_model_filename() {
       ;;
   esac
 }
+
+# Ordered list of known model aliases — the single source of truth
+KNOWN_MODELS=(
+  "qwen35"
+  "phi-mini"
+)
+
+# List all registered model aliases by calling get_model_filename() at runtime
+list_models() {
+  for alias in "${KNOWN_MODELS[@]}"; do
+    FILE_TMP=$(get_model_filename "$alias")
+    if [ -n "$FILE_TMP" ]; then
+      printf "  %-12s → %s\n" "$alias" "$FILE_TMP"
+    fi
+  done
+}

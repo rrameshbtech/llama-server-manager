@@ -35,7 +35,11 @@ FILE=$(get_model_filename "$MODEL_ALIAS")
 
 if [ -z "$FILE" ]; then
   echo "[ERROR] Unknown model alias: '$MODEL_ALIAS'"
-  echo "Check registered models in ~/projects/ai-models/.config/registry.sh"
+  echo ""
+  echo "Available models:"
+  list_models
+  echo ""
+  echo "Usage: ai-model-start <MODEL_ALIAS> [-c CTX_SIZE] [-p PORT] [-j]"
   exit 1
 fi
 
